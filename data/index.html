@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WebTTL</title>
+    <style>
+        body {
+            font-family: helvetica, sans-serif, arial;
+            font-size: 16px;
+            color: #111;
+            background-color: #111;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="terminal"></div>
+
+    <script type="module" module>
+        const { Terminal } = await import("https://esm.sh/xterm@4").then(r => r.default);
+        function getTermSize() {
+            return {
+                cols: Math.floor(window.innerWidth / 9),
+                rows: Math.floor(window.innerHeight / 17),
+            }
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        let baud = params.get('baud') || 115200;
+        await fetch(`/b?v=${baud}`).catch(err => console.error(err));
+
+        const { cols, rows } = getTermSize()
+
+        let term = new Terminal({
+            cols,
+            rows,
+            useStyle: true,
+            cursorBlink: true
+        })
+
+        const protocol = (location.protocol === 'https:') ? 'wss://' : 'ws://';
+        const socketURL = protocol + location.hostname + ((location.port) ? (':' + location.port) : '') + '/ws';
+        // const sock = new WebSocket(socketURL);
+        const sock = new WebSocket('ws://10.0.0.116/ws');
+
+        sock.addEventListener('open',  () => {
+            term.open(document.getElementById('terminal'));
+            term.focus();
+        });
+
+        sock.addEventListener('message', async (recv) => {
+            if (recv.data instanceof Blob) {
+                term.write(await recv.data.text())
+            } else {
+                console.log('>', recv.data)
+            }
+        });
+
+        let message = { 'status': 0, 'data': null, 'cols': null, 'rows': null };
+
+        term.onData((data) => {
+            sock.send(data)
+        });
+
+        window.addEventListener('resize', ()  => {
+            const { cols, rows } = getTermSize()
+            term.resize(cols, rows)
+        });
+    </script>
+</body>
+
+</html>
