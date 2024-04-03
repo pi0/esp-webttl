@@ -13,3 +13,7 @@ The project is fully functioning and the speed of controlling TTL is the same as
 4. Modify SSID information by copy `data/config.example.json` to `data/config.json`.
 5. Build SPIFFS image with "Build Filesystem Image" and upload to the board.
 
+
+## License
+
+Forked from [skyvense/pio-EspWebTTL](https://github.com/skyvense/pio-EspWebTTL).
